@@ -1,0 +1,49 @@
+---
+- hosts: all
+  become: true
+  gather_facts: false
+
+  vars:
+    latest_url: https://download-cf.jetbrains.com/toolbox/jetbrains-toolbox-1.17.7275.tar.gz
+
+  tasks:
+    - name: "Install the packages for Running GUI"
+      apt:
+        name: "{{ item }}"
+        state: latest
+      loop:
+        - ubuntu-desktop
+        - xrdp
+        - xfce4
+
+    - name: "Making the Default Connection to xfce instead of xrdp"
+      copy:
+        dest: "/home/cloud_user/.xsession"
+        content: xfce4-session
+
+    - name: "Restarting Xrdp Service"
+      service:
+        name: xrdp
+        state: restarted
+
+    - name: "Remove Useless Packages"
+      apt:
+        autoclean: yes
+
+    - name: "Remove Dependencies that are no longer Used"
+      apt:
+        autoremove: yes
+
+    - name: "Download Jetbrains Goland toolBox"
+      get_url:
+        url: "{{ latest_url }}"
+        dest: /home/cloud_user/Downloads
+
+    - name: "Delete Unused Directories"
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /var/log
+        - /var/cache
+        - /usr/games
